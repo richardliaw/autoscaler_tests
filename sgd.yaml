@@ -1,0 +1,70 @@
+# An unique identifier for the head node and workers of this cluster.
+cluster_name: sgd-cluster
+
+# The maximum number of workers nodes to launch in addition to the head
+# node. This takes precedence over min_workers. min_workers default to 0.
+min_workers: 0
+initial_workers: 1
+max_workers: 2
+
+# docker:
+#     image: tensorflow/tensorflow:1.5.0-py3
+#     container_name: ray_docker
+
+# Cloud-provider specific configuration.
+provider:
+    type: aws
+    region: us-east-1
+    availability_zone: us-east-1b
+
+# How Ray will authenticate with newly launched nodes.
+auth:
+    ssh_user: ubuntu
+
+head_node:
+    InstanceType: c5.4xlarge
+    ImageId: ami-076fb2ffd49699eea
+    #    InstanceMarketOptions:
+    #        MarketType: spot
+    #        SpotOptions:
+    #            MaxPrice: "9.0"
+
+
+worker_nodes:
+    InstanceType: g3.8xlarge
+    ImageId: ami-076fb2ffd49699eea
+    InstanceMarketOptions:
+        MarketType: spot
+        SpotOptions:
+            MaxPrice: "9.0"
+
+    # 
+    #     # Run workers on spot by default. Comment this out to use on-demand.
+    #     InstanceMarketOptions:
+    #         MarketType: spot
+
+setup_commands: 
+    - echo "source activate tensorflow_p36;" >> ~/.bashrc
+    - pip install torch torchvision filelock
+    - ray || pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.7.0.dev3-cp36-cp36m-manylinux1_x86_64.whl
+
+
+file_mounts: { 
+    }
+
+# Custom commands that will be run on the head node after common setup.
+head_setup_commands: []
+
+# Custom commands that will be run on worker nodes after common setup.
+worker_setup_commands: []
+
+# # Command to start ray on the head node. You don't need to change this.
+head_start_ray_commands:
+    - ray stop
+    - ray start --head --redis-port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml --object-store-memory=1000000000
+
+# Command to start ray on worker nodes. You don't need to change this.
+worker_start_ray_commands: 
+    - ray stop
+    - ray start --redis-address=$RAY_HEAD_IP:6379 --object-manager-port=8076 --object-store-memory=1000000000
+

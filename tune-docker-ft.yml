@@ -1,0 +1,64 @@
+# An unique identifier for the head node and workers of this cluster.
+cluster_name: cpu-cluster
+
+# The maximum number of workers nodes to launch in addition to the head
+# node. This takes precedence over min_workers. min_workers default to 0.
+min_workers: 3
+initial_workers: 3
+max_workers: 5
+
+#docker:
+#    image: "tensorflow/tensorflow:1.12.0-gpu-py3"
+#    container_name: "ray-nvidia-docker-test" # e.g. ray_docker
+#    run_options:
+#      - --runtime=nvidia
+
+# Cloud-provider specific configuration.
+provider:
+    type: aws
+    region: us-east-1
+    availability_zone: us-east-1b
+
+# How Ray will authenticate with newly launched nodes.
+auth:
+    ssh_user: ubuntu
+
+head_node:
+    InstanceType: c5.large
+    ImageId: ami-0757fc5a639fe7666
+
+worker_nodes:
+    InstanceType: c5.xlarge
+    ImageId: ami-0757fc5a639fe7666
+    InstanceMarketOptions:
+        MarketType: spot
+        # SpotOptions:
+        #     MaxPrice: "2.0"
+
+setup_commands:
+    - rm -rf /home/ubuntu/anaconda3/lib/python3.6/site-packages/ray/
+    - pip install torch torchvision filelock
+    - pip uninstall ray --yes
+    - pip install -U ray
+    - cd ~/python/ray/ && python setup-dev.py --yes
+
+file_mounts: {
+    python/: /Users/rliaw/Research/riselab/ray/python
+}
+
+# Custom commands that will be run on the head node after common setup.
+head_setup_commands: []
+
+# Custom commands that will be run on worker nodes after common setup.
+worker_setup_commands: []
+
+# # Command to start ray on the head node. You don't need to change this.
+head_start_ray_commands:
+    - ray stop
+    - ray start --head --redis-port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml --object-store-memory=1000000000
+
+# Command to start ray on worker nodes. You don't need to change this.
+worker_start_ray_commands:
+    - ray stop
+    - ray start --redis-address=$RAY_HEAD_IP:6379 --object-manager-port=8076 --object-store-memory=1000000000
+
