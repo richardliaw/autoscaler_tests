@@ -32,7 +32,7 @@ class MyTrainableClass(Trainable):
         self.timestep += 1
         v = np.tanh(float(self.timestep) / self.config["width"])
         v *= self.config["height"]
-        time.sleep(1)
+        time.sleep(5)
 
         # Here we use `episode_reward_mean`, but you can also report other
         # objectives such as loss or accuracy.
@@ -72,7 +72,7 @@ if __name__ == "__main__":
                     "training_iteration": 50
                 },
                 "checkpoint_freq": 2,
-                "num_samples": 3,
+                "num_samples": 30,
                 "resources_per_trial": {
                     "cpu": 4,
                     "gpu": 0
@@ -84,4 +84,4 @@ if __name__ == "__main__":
                         lambda spec: int(100 * random.random())),
                 },
             }
-        })
+        }, verbose=1)

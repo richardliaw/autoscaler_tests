@@ -3,9 +3,9 @@ cluster_name: cpu-cluster
 
 # The maximum number of workers nodes to launch in addition to the head
 # node. This takes precedence over min_workers. min_workers default to 0.
-min_workers: 3
-initial_workers: 3
-max_workers: 5
+min_workers: 10
+initial_workers: 10
+max_workers: 20
 
 #docker:
 #    image: "tensorflow/tensorflow:1.12.0-gpu-py3"
@@ -39,11 +39,12 @@ setup_commands:
     - rm -rf /home/ubuntu/anaconda3/lib/python3.6/site-packages/ray/
     - pip install torch torchvision filelock
     - pip uninstall ray --yes
-    - pip install -U ray
+    - pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-0.8.0.dev1-cp36-cp36m-manylinux1_x86_64.whl
     - cd ~/python/ray/ && python setup-dev.py --yes
 
 file_mounts: {
-    python/: /Users/rliaw/Research/riselab/ray/python
+    python/: /Users/rliaw/Research/riselab/ray/python,
+    /home/ubuntu/anaconda3/lib/python3.6/site-packages/ray/state.py: /Users/rliaw/Research/riselab/ray/python/ray/state.py
 }
 
 # Custom commands that will be run on the head node after common setup.
@@ -55,7 +56,7 @@ worker_setup_commands: []
 # # Command to start ray on the head node. You don't need to change this.
 head_start_ray_commands:
     - ray stop
-    - ray start --head --redis-port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml --object-store-memory=1000000000
+    - ray start --head --redis-port=6379 --object-manager-port=8076 --autoscaling-config=~/ray_bootstrap_config.yaml --object-store-memory=1000000000 --internal-config={\"initial_reconstruction_timeout_milliseconds\":2000\,\"num_heartbeats_timeout\":100}
 
 # Command to start ray on worker nodes. You don't need to change this.
 worker_start_ray_commands:
